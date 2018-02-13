@@ -82,7 +82,7 @@
                         <viewLayoutGuide key="safeArea" id="6Tk-OE-BBY"/>
                     </view>
                     <navigationItem key="navigationItem" id="Tga-QY-fvB">
-                        <barButtonItem key="leftBarButtonItem" title="Item" image="share" id="vBm-8U-Cpd">
+                        <barButtonItem key="leftBarButtonItem" systemItem="action" id="vBm-8U-Cpd">
                             <connections>
                                 <action selector="shareWithFriends" destination="BYZ-38-t0r" id="Uqf-Ir-0lf"/>
                             </connections>
@@ -98,6 +98,7 @@
                         <outlet property="cameraButton" destination="7Ht-ev-0xu" id="lAm-7k-h45"/>
                         <outlet property="imageView" destination="4LB-Lm-A2R" id="UF2-Zh-sJ9"/>
                         <outlet property="selectedImageView" destination="4LB-Lm-A2R" id="ACV-0e-AaZ"/>
+                        <outlet property="toolbar" destination="5dd-Za-bnd" id="svz-fe-oQY"/>
                         <outlet property="topTextFields" destination="BGS-we-1zK" id="vpB-tB-d8e"/>
                     </connections>
                 </viewController>
@@ -126,6 +127,5 @@
     </scenes>
     <resources>
         <image name="camera" width="50" height="39"/>
-        <image name="share" width="30" height="43"/>
     </resources>
 </document>

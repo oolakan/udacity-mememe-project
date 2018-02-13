@@ -16,11 +16,27 @@ class ViewController: UIViewController, UIImagePickerControllerDelegate, UINavig
     @IBOutlet weak var topTextFields: UITextField!
     @IBOutlet weak var cameraButton: UIBarButtonItem!
     @IBOutlet weak var imageView: UIImageView!
-    //let paragraph = NSMutableParagraphStyle().alignment = .center
     
-   
+    @IBOutlet weak var toolbar: UIToolbar!
+
+    
     override func viewDidLoad() {
         super.viewDidLoad()
+        configure()
+    }
+    // check if camera is avaible on device
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        subscribeToKeyboardNotifications()
+        cameraButton.isEnabled = UIImagePickerController.isSourceTypeAvailable(.camera)
+    }
+    
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        unsubscribeFromKeyboardNotifications()
+    }
+    
+    fileprivate func configure() {
         // set text alignment to center
         let paragraph = NSMutableParagraphStyle()
         paragraph.alignment = .center
@@ -40,23 +56,22 @@ class ViewController: UIViewController, UIImagePickerControllerDelegate, UINavig
         
         self.topTextFields.defaultTextAttributes = memeTextAttributes
         self.bottomTextFields.defaultTextAttributes = memeTextAttributes
-    
     }
-    // select image from album
-    @IBAction func pickAnImageFromAlbum(_ sender: Any) {
-        let imagePicker = UIImagePickerController()
+    func presentImagePickerWith(sourceType: UIImagePickerControllerSourceType) {
+         let imagePicker = UIImagePickerController()
         imagePicker.delegate = self
-        imagePicker.sourceType = .photoLibrary
-        imagePicker.mediaTypes = UIImagePickerController.availableMediaTypes(for: .photoLibrary)!
+        imagePicker.sourceType = sourceType
         present(imagePicker, animated: true, completion: nil)
+    }
+    
+    @IBAction func pickAnImageFromAlbum(_ sender: Any) {
+        let sourceType: UIImagePickerControllerSourceType = .photoLibrary;
+        presentImagePickerWith(sourceType: sourceType)
     }
     // capture image from camera
     @IBAction func pickAnImageFromCamera(_ sender: Any)  {
-        let imagePicker = UIImagePickerController()
-        imagePicker.delegate = self
-        imagePicker.sourceType = .camera
-        imagePicker.modalPresentationStyle = .fullScreen
-        present(imagePicker, animated: true, completion: nil)
+       let sourceType: UIImagePickerControllerSourceType = .camera
+       self.presentImagePickerWith(sourceType: sourceType)
     }
     // cancel saved mimedImage and reset to default
     @IBAction func cancel() {
@@ -69,7 +84,7 @@ class ViewController: UIViewController, UIImagePickerControllerDelegate, UINavig
     @IBAction func shareWithFriends(){
         if ((topTextFields.text?.isEmpty)! || (bottomTextFields.text?.isEmpty)!) {
             alert(title: "Action", message: "Both top and bottom texts are required")
-        }else {
+        } else {
             let message = "check out this cool image"
             let sharedImage = generateMemedImage()
             let activityViewController = UIActivityViewController(activityItems: [message, sharedImage], applicationActivities: nil)
@@ -87,8 +102,7 @@ class ViewController: UIViewController, UIImagePickerControllerDelegate, UINavig
         }
     }
     
-    func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [String : Any])
-    {
+    func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [String : Any]) {
         let selectedImage = info[UIImagePickerControllerOriginalImage] as! UIImage
         self.navigationController?.isNavigationBarHidden = false
         imageView.contentMode = UIViewContentMode.scaleAspectFit
@@ -101,46 +115,24 @@ class ViewController: UIViewController, UIImagePickerControllerDelegate, UINavig
         dismiss(animated: true, completion: nil)
     }
     
-    // check if camera is avaible on device
-    override func viewWillAppear(_ animated: Bool) {
-        super.viewWillAppear(animated)
-        subscribeToKeyboardNotifications()
-        subscribeToKeyboardWillHideNotifications()
-        cameraButton.isEnabled = UIImagePickerController.isSourceTypeAvailable(.camera)
-    }
-    
+   
     func textFieldShouldReturn(_ textField: UITextField) -> Bool {
         topTextFields.resignFirstResponder()
         bottomTextFields.resignFirstResponder()
         return true
     }
-   
-    override func viewWillDisappear(_ animated: Bool) {
-        super.viewWillDisappear(animated)
-        unsubscribeFromKeyboardNotifications()
-        unsubscribeFromKeyboardWillHideNotifications()
-    }
     
     
     func subscribeToKeyboardNotifications() {
-        
         NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillShow(_:)), name: .UIKeyboardWillShow, object: nil)
-    }
-    
-    func subscribeToKeyboardWillHideNotifications() {
-        
         NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillHide(_:)), name: .UIKeyboardWillHide, object: nil)
     }
     
     func unsubscribeFromKeyboardNotifications() {
         NotificationCenter.default.removeObserver(self, name: .UIKeyboardWillShow, object: nil)
-    }
-    
-    func unsubscribeFromKeyboardWillHideNotifications() {
         NotificationCenter.default.removeObserver(self, name: .UIKeyboardWillHide, object: nil)
     }
-    
-
+   
     @objc func keyboardWillShow(_ notification:Notification) {
         if (bottomTextFields.isEditing) {
             self.view.frame.origin.y -= getKeyboardHeight(notification)
@@ -182,18 +174,14 @@ class ViewController: UIViewController, UIImagePickerControllerDelegate, UINavig
 
     func generateMemedImage() -> UIImage {
         // hide navbar and toolbar
-        self.navigationController?.isNavigationBarHidden = true
-        self.navigationController?.isToolbarHidden = true
-        
+       self.hideTopAndBottomBars(true)
         // Render view to an image
         UIGraphicsBeginImageContext(self.view.frame.size)
         view.drawHierarchy(in: self.view.frame, afterScreenUpdates: true)
         let memedImage:UIImage = UIGraphicsGetImageFromCurrentImageContext()!
         UIGraphicsEndImageContext()
         // show navbar and toolbar
-        self.navigationController?.isNavigationBarHidden = false
-        self.navigationController?.isToolbarHidden = false
-      
+        self.hideTopAndBottomBars(false)
         return memedImage
     }
     
@@ -203,6 +191,11 @@ class ViewController: UIViewController, UIImagePickerControllerDelegate, UINavig
         uiAlertController.addAction(UIAlertAction(title: "CLOSE", style: .default, handler: nil))
         present(uiAlertController, animated: true, completion: nil)
         return
+    }
+    
+    func hideTopAndBottomBars(_ hide: Bool) {
+        self.navigationController?.isNavigationBarHidden = hide
+        self.toolbar.isHidden = hide
     }
     
 }
